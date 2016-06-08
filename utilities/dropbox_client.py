@@ -1,4 +1,5 @@
 import dropbox
+from os.path import join
 
 from dev import APP_ACCESS, DATA_ROOT
 
@@ -9,16 +10,19 @@ class DropboxWrapper(object):
         self.client = dropbox.client.DropboxClient(APP_ACCESS)
         self.file_root = DATA_ROOT
 
-    def get_file(self, filename, root=None):
+    def _make_filename(self, path, root):
         if not root:
             root = self.file_root
-        rt_filename = root + filename
-        return self.client.get_file_and_metadata(rt_filename)
+        return join(root, path)
+
+    def get_file(self, filename, root=None):
+        rt_filename = self._make_filename(filename, root)
+        print('Accessing {}'.format(rt_filename))
+        f, meta = self.client.get_file_and_metadata(rt_filename)
+        return f
 
     def push_file(self, filename, root=None):
-        if not root:
-            root = self.file_root
-        rt_filename = root + filename
+        rt_filename = self._make_filename(filename, root)
         response = self.client.put_file(rt_filename, 'f')
         return response
 
