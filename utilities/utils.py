@@ -23,15 +23,19 @@ def csv_from_excel(filename, csv_filename=None):
                 writer.writerow([clean_unicode(entry) for entry in wsheet.row_values(rownum)])
 
 
-def csv_from_txt(filename, csv_filename=None, delim='|'):
+def csv_from_txt(filename, csv_filename=None):
     # remove unicode and convert random txt files to csv delimited clean versions
     if not csv_filename:
         csv_filename = filename
 
-    with open(''.join([str(csv_filename), '.csv']), 'w') as f:
+    with open(''.join([str(csv_filename), '.csv']), 'wb') as f:
         writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
         with open(''.join([str(filename), '.txt']), 'r') as r:
-            for line in r.readlines():
-                writer.writerow([clean_unicode(entry) for entry in line.split(delim)])
+            dialect = csv.Sniffer().sniff(r.read(1024))
+            r.seek(0)
+            reader = csv.reader(r, delimiter=dialect.delimiter)
+            for line in reader.readlines():
+                writer.writerow([clean_unicode(entry) for entry in line.split(dialect.delimiter)])
+
 
 
