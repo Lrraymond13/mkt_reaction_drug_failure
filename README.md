@@ -6,4 +6,4 @@ Code for data cleaning and analysis of a stock and market data
 
 - data construction has code to compile dataset using merges
 
-- analysis contains regression and data viz code 
+- analysis contains regression and data viz code
