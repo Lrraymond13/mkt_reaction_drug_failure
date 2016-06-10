@@ -2,19 +2,20 @@ import funcy
 import numpy as np
 from os.path import join
 import pandas as pd
-import cPickle as pickle
 import string
 
 EXPORT_DUPS = 1
 DIR = '/Users/lrraymond13/MIT/'
-COMP_TICKER_FNAME = 'company_names_to_8_cusips.csv'
-comp_id_fname = 'output_companies_flat_all_new.csv'
+COMP_TICKER_FNAME = 'company_names_to_8_cusips'
+COMP_ID_FNAME = 'output_companies_flat_all_new'
 
 
 # Define String Cleaning Function
 def strip_upcase(str_var):
-    str_v = str_var.strip().upper()
-    return '_'.join(str_v.split())
+    str_v = str(str_var).strip().upper()
+    printable_chars = set(string.printable)
+    filter_chars = ''.join(filter(lambda x: x in printable_chars, str_v))
+    return '_'.join(filter_chars.split())
 
 
 def strip_punctuation(str_var):
@@ -47,7 +48,7 @@ def from_pickle(filename):
     return pd.read_pickle(source)
 
 
-def clean_get_df(comp_ticker_fname, cwd):
+def get_clean_compticker_df(comp_ticker_fname, cwd):
     # read in company names to cusips data set
     # strip/upcase comany name, convert cusips to numberical
     # change index to cleaned company name (this will be merge key)
@@ -56,7 +57,7 @@ def clean_get_df(comp_ticker_fname, cwd):
     if not cwd:
         cwd = DIR
 
-    comp_ticker = pd.read_csv(join(cwd, comp_ticker_fname))
+    comp_ticker = pd.read_csv(join(cwd, comp_ticker_fname + '.csv'))
     comp_ticker['CLEAN_NAME'] = comp_ticker['Company name'].apply(strip_upcase)
 
     # clean and convert all column headers to upcase with _ delimiters
@@ -88,4 +89,41 @@ def clean_get_df(comp_ticker_fname, cwd):
     comp_ticker_clean.to_csv(join(cwd, 'company_ticker_clean.csv'))
     to_pickle(comp_ticker_clean, 'company_ticker_clean')
     return comp_ticker_clean
+
+
+def get_clean_compdrug_df(comp_drug_fname, cwd):
+    # read in company names to cusips data set
+    # strip/upcase comany name, convert cusips to numberical
+    # change index to cleaned company name (this will be merge key)
+    if not comp_drug_fname:
+        comp_drug_fname = COMP_ID_FNAME
+    if not cwd:
+        cwd = DIR
+
+    comp_id = pd.read_csv(join(DIR, comp_drug_fname + '.csv'), names=map(str, xrange(10)))
+    comp_id_df = comp_id[['0', '1', '2']]
+    del comp_id
+    comp_id_df.columns = ['DRUG_ID', 'COMPANY_NAME', 'ANCESTOR']
+    comp_id_df['CLEAN_NAME'] = comp_id_df['COMPANY_NAME'].apply(strip_upcase)
+    comp_id_sorted = comp_id_df.sort_values(['CLEAN_NAME', 'DRUG_ID'], axis=0)
+
+    dup_names = comp_id_sorted[comp_id_sorted.duplicated(['CLEAN_NAME'], keep=False)]
+    dup_names.to_csv(join(DIR, 'company_id_duplicates.csv'))
+    comp_id_dups = comp_id_sorted.drop_duplicates('CLEAN_NAME', keep='first')
+    comp_d_df = comp_id_dups.set_index(['CLEAN_NAME'], verify_integrity=True)
+    comp_d_df.to_csv(join(cwd, COMP_ID_FNAME + '.csv'))
+    to_pickle(comp_d_df, COMP_ID_FNAME)
+    return comp_d_df
+
+
+def merge_drug_ticker(comp_ticker, comp_d_df):
+    # inner merge of dataframes of company, ticker and company drug, merge on index
+    merged = pd.merge(comp_ticker, comp_d_df, how='inner', left_index=True, right_index=True)
+    unmatched = comp_ticker[(comp_ticker.CLEAN_TICKER != 'Unlisted') & (
+        ~comp_ticker.CLEAN_TICKER.isin(merged[merged['CLEAN_TICKER'] != 'Unlisted'].CLEAN_TICKER))]
+    unmatched_clean = unmatched.dropna()
+    unmatched_clean.to_csv(join(DIR, 'Unmatched_listed_companies.csv'))
+    merged.to_csv(join(DIR, 'company_drugids_ticker' + '.csv'))
+    merged.to_pickle(join(DIR, 'company_drugids_ticker' + '.p'))
+    return merged
 
