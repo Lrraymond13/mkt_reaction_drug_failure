@@ -52,7 +52,7 @@ class DropboxAPI(object):
             return None
         return StringIO(cont.content)
 
-    def upload_file(self, local_path, dropbox_path=None):
+    def upload_file(self, local_path, dropbox_path):
         with open(local_path, 'r') as f:
             print('Uploading {local} to Dropbox as {path}'.format(
                 local=local_path, path=dropbox_path))
