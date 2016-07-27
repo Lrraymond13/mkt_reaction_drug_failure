@@ -1,8 +1,11 @@
 import csv
 import funcy
+import numpy as np
 import string
 import xlrd
 
+
+DELIM = '_'
 
 def clean_unicode(string_entry):
     try:
@@ -12,32 +15,33 @@ def clean_unicode(string_entry):
 
 
 # Define String Cleaning Function
-def filter_str(var):
-    str_var = str(var)
-    printable_chars = set(string.printable)
-    return ''.join(filter(lambda x: x in printable_chars, str_var))
-
-
 def strip_upcase(str_var):
-    delim = '_'
     str_v = str(str_var).strip().upper()
-    res = delim.join(str_v.split())
+    res = DELIM.join(str_v.split())
     # strip first and last _ chars
-    if res[0] == delim:
+    if res[0] == DELIM:
         res = res[1:]
     if res[-1] == res:
         res = res[:-1]
-    return res
+    return DELIM.join(filter(None, res.split(DELIM)))
 
 
 def strip_punctuation(str_var):
-    excluded_char = set(funcy.concat(string.punctuation, ['@']))
-    str_split = ''.join('_' if ch in excluded_char else ch for ch in str_var)
-    return '_'.join(str_split.split('_'))
+    excluded_char = set(string.punctuation) - set([DELIM])
+    if not isinstance(str_var, str):
+        print(str_var)
+        return str_var
+    return ''.join(ch for ch in str_var if ch not in excluded_char)
 
+
+def remove_stopwords(str, stopwords, DELIM='_'):
+    if not isinstance(stopwords, set):
+        stopwords = set(stopwords)
+    newstr = filter(lambda x: x not in stopwords, str.split(DELIM))
+    return DELIM.join(newstr)
 
 # Define column cleaning function
-clean_columns = funcy.compose(strip_upcase, strip_punctuation, filter_str)
+clean_columns = funcy.rcompose(strip_punctuation, strip_upcase)
 
 
 def csv_from_excel(filename, csv_filename=None):
@@ -55,7 +59,7 @@ def csv_from_excel(filename, csv_filename=None):
 
 
 def csv_from_txt(txt_filename, csv_filename=None):
-    # remove unicode and convert random txt files to csv delimited clean versions
+    # remove unicode and convert random txt files to csv DELIMited clean versions
     if not csv_filename:
         csv_filename = txt_filename
 
