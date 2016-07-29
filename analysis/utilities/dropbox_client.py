@@ -9,16 +9,15 @@ if sys.version_info[0] < 3:
 else:
     from io import StringIO
 import pandas as pd
-import numpy as np
 
 
-from analysis.dev import APP_ACCESS, LOCAL_PATH
+from analysis.dev import JK_APP_ACCESS, LOCAL_PATH
 
 
 class DropboxAPI(object):
 
     def __init__(self, access_key=None):
-        self._access = access_key or APP_ACCESS
+        self._access = access_key or JK_APP_ACCESS
         self._client = dropbox.Dropbox(self._access)
 
     def _make_path(self, rel_path):
