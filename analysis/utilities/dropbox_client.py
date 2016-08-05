@@ -11,13 +11,13 @@ else:
 import pandas as pd
 
 
-from analysis.dev import JK_APP_ACCESS, LOCAL_PATH
+from analysis.dev import MIT_APP_ACCESS, LOCAL_PATH
 
 
 class DropboxAPI(object):
 
     def __init__(self, access_key=None):
-        self._access = access_key or JK_APP_ACCESS
+        self._access = access_key or MIT_APP_ACCESS
         self._client = dropbox.Dropbox(self._access)
 
     def _make_path(self, rel_path):
@@ -26,7 +26,7 @@ class DropboxAPI(object):
 
     def search(self, query, path=None):
         if not path:
-            path = '/data'
+            path = '/'
         print('Searching {query} in path {path}'.format(query=query, path=path))
         r = self._client.files_search(path=path, query=query)
         return list((k.metadata.path_lower, k.metadata.size) for k in r.matches)
