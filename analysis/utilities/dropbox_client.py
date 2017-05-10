@@ -26,7 +26,7 @@ class DropboxAPI(object):
 
     def search(self, query, path=None):
         if not path:
-            path = '/'
+            path = ''
         print('Searching {query} in path {path}'.format(query=query, path=path))
         r = self._client.files_search(path=path, query=query)
         return list((k.metadata.path_lower, k.metadata.size) for k in r.matches)
